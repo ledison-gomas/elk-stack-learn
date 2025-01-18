@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: elk-logstash
+  labels:
+    type: local
+spec:
+  #we use local node storage here!
+  #kubectl get storageclass
+  storageClassName: ""
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  local:
+    path: "/home/kubeadmin/mnt/elk-logstash"
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ptinawsldkubcpaas03
+---

@@ -1,0 +1,52 @@
+connect server 1
+
+login root
+cd /home/kubeadmin/mnt/
+mkdir elk
+chmod 666 elk
+
+
+
+connect server 2
+
+login root
+cd /home/kubeadmin/mnt/
+mkdir elk
+chmod 666 elk
+
+
+connect server 3
+
+login root
+cd /home/kubeadmin/mnt/
+mkdir elk
+chmod 666 elk
+
+ssh root@172.18.1.50
+
+connect server 3
+
+login root
+cd /home/kubeadmin/mnt/
+mkdir elk-logstash
+chmod 666 elk-logstash
+
+
+==============
+
+kubectl apply -f pv/pv-elk-elastic.yaml
+kubectl apply -f pv/pv-elk-logstash.yaml
+
+helm install elasticsearch elastic/elasticsearch -f ./elasticsearch/my-values.yaml
+helm install kibana elastic/kibana -f ./kibana/my-values.yaml
+helm install logstash elastic/logstash -f ./logstash/my-values.yaml
+helm install filebeat elastic/filebeat -f ./filebeat/my-values.yaml
+
+
+
+
+kubectl port-forward svc/kibana-kibana 5601:5601
+
+
+
+

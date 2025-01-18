@@ -1,0 +1,99 @@
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: cpaas-topup-v1-config
+data:
+  config.json: |
+    {
+        "consul_config": {
+            "Name": "topup--v1",
+            "Tags": [
+                "v1",
+                "nginx-route",
+                "defaultTopup",
+                "TopupV1",
+                "label:__address__=localhost:4001",
+                "label:__address__=localhost:4001",
+                "metrics=localhost:4001"
+            ],
+            "Address": "127.0.0.1",
+            "Port": 8801,
+            "EnableTagOverride": false
+        },
+        "redis_conf" : {
+            "host": "redis-deploy-service",
+            "port" : 6379
+        },
+        "balmgt_conf" : {
+            "host": "cpaas-balmgt-service",
+            "port" : 8801
+        },
+        "prometheus_config": {
+            "port": 4001
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpaas-topup-v1
+  labels:
+    app: cpaas-topup-v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cpaas-topup-v1
+  template:
+    metadata:
+      labels:
+        app: cpaas-topup-v1
+      name: cpaas-topup-v1
+    spec:
+      containers:
+      - name: cpaas-topup-v1
+        image: ledison/microservices:topup1.0
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8801
+          containerPort: 4001
+        volumeMounts:
+        - readOnly: true
+          mountPath: config.json
+          subPath: config.json
+          name: cpaas-topup-v1-config
+      volumes:
+      - name: cpaas-topup-v1-config
+        configMap:
+          name: cpaas-topup-v1-config
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: cpaas-topup-v1-service
+  labels:
+    app: cpaas-topup-v1-service
+spec:
+  selector:
+    app: cpaas-topup-v1
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8801
+      targetPort: 8801
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: cpaas-topup-v1-prometheus-service
+  labels:
+    app: cpaas-topup-v1-prometheus-service
+spec:
+  selector:
+    app: cpaas-topup-v1
+  ports:
+    - name: http
+      protocol: TCP
+      port: 4001
+      targetPort: 4001

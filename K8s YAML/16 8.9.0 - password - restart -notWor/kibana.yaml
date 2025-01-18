@@ -1,0 +1,67 @@
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: kibana-config
+data:
+  kibana.yml: |
+    server.host: "0.0.0.0"
+    server.shutdownTimeout: "5s"
+    elasticsearch.hosts: [ "https://elasticsearch:9200" ]
+    elasticsearch.username: "kibana_system"
+    elasticsearch.password: "ew=g91Qoazl4Q+Y5HSN_"
+    xpack.reporting.roles.enabled: false
+    xpack.encryptedSavedObjects.encryptionKey: e1a8f14f7001eb7465b66872f5f71b0d
+    xpack.reporting.encryptionKey: 15a6cb05ae293018bb76d6549d501bc0
+    xpack.security.encryptionKey: 05ff22ea3d8553aaf8e51f7ad369f348
+    elasticsearch.ssl.verificationMode: "none"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+      name: kibana
+    spec:
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana:8.9.0
+        ports:
+        - name: http
+          containerPort: 5601
+        env:
+        - name: ELASTICSEARCH_HOSTS
+          value: "https://elasticsearch:9200"
+        volumeMounts:
+        - readOnly: true
+          mountPath: /usr/share/kibana/config/kibana.yml
+          subPath: kibana.yml
+          name: kibana-config
+      volumes:
+      - name: kibana-config
+        configMap:
+          name: kibana-config
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kibana-service
+  labels:
+    app: kibana-service
+spec:
+  selector:
+    app: kibana
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5601
+      targetPort: 5601

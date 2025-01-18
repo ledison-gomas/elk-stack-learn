@@ -1,0 +1,93 @@
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: logstash-config
+data:
+  logstash.conf: |
+    input {
+       beats {
+        port => 5044
+      }
+    }
+    filter {
+        if "json" in [tags] {
+          json {
+              source => "message"
+          }
+        }
+        if "keyvalue" in [tags] {
+          kv {
+          }
+        }
+        if "appkeyvalue" in [tags] {
+            grok {
+                pattern_definitions => {
+                  "DEFAULT_PATH" => "(default\[#[0-9]+\]|%{WORD})"
+                }
+                match => [
+                "message", "%{TIMESTAMP_ISO8601:timeStamp}\|%{LOGLEVEL:logLevel}\|(?:%{WORD:appName})\|P%{NUMBER:processId}\|T%{NUMBER:thread_id}\|%{PATH:fileName}\|%{WORD:funcName}\|L%{NUMBER:lineNum}\|%{DEFAULT_PATH:correlationId}\|%{GREEDYDATA:msg}"
+                ]
+            }
+            if [msg] {
+              kv{
+                source => "msg"
+              }
+            }
+        }
+    }
+    output {
+       elasticsearch {
+          hosts => ["http://elasticsearch:9200"]
+       }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  labels:
+    app: logstash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+      name: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:7.17.9
+        ports:
+        - name: http
+          containerPort: 5044
+        args: [
+          "-f", "/etc/logstash.conf",
+        ]
+        volumeMounts:
+        - readOnly: true
+          mountPath: /etc/logstash.conf
+          subPath: logstash.conf
+          name: logstash-config
+      volumes:
+      - name: logstash-config
+        configMap:
+          name: logstash-config
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: logstash-service
+  labels:
+    app: logstash-service
+spec:
+  selector:
+    app: logstash
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5044
+      targetPort: 5044

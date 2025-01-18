@@ -1,0 +1,137 @@
+daemonset:
+  filebeatConfig:
+    filebeat.yml: |
+      #filebeat.inputs:
+      #- type: container
+      #  paths:
+      #    - /var/log/containers/*.log
+      #  processors:
+      #    - add_kubernetes_metadata:
+      #        host: ${NODE_NAME}
+      #        matchers:
+      #        - logs_path:
+      #            logs_path: "/var/log/containers/"
+
+      # To enable hints based autodiscover, remove `filebeat.inputs` configuration and uncomment this:
+      filebeat.autodiscover:
+        providers:
+          - type: kubernetes
+            templates:
+              - condition:
+                  and:
+                    - or:
+                      - equals:
+                          kubernetes.namespace: "cpaas-demo-number-mgt"
+                      - equals:
+                          kubernetes.namespace: "cpaas-chassis"
+                      - equals:
+                          kubernetes.namespace: "cpaas-sms"
+                      - equals:
+                          kubernetes.namespace: "cpaas-voice"
+                    - not:
+                        contains:
+                          kubernetes.deployment.name: "validator"
+                config:
+                  - type: container
+                    paths:
+                      - /var/log/containers/*-${data.kubernetes.container.id}.log
+                    tags: ["appkeyvalue"]
+              - condition:
+                  and:
+                    - or:
+                      - equals:
+                          kubernetes.namespace: "cpaas-demo-number-mgt"
+                      - equals:
+                          kubernetes.namespace: "cpaas-chassis"
+                      - equals:
+                          kubernetes.namespace: "cpaas-sms"
+                      - equals:
+                          kubernetes.namespace: "cpaas-voice"
+                    - contains:
+                        kubernetes.deployment.name: "validator"
+                config:
+                  - type: container
+                    paths:
+                      - /var/log/containers/*-${data.kubernetes.container.id}.log
+                    tags: ["validator"]
+              - condition:
+                  or:
+                    - equals:
+                        kubernetes.namespace: "cpaas-ui"
+                    - equals:
+                        kubernetes.namespace: "cpaas-ui-om"
+                config:
+                  - type: container
+                    paths:
+                      - /var/log/containers/*-${data.kubernetes.container.id}.log
+                    tags: ["ui-nginx"]
+              - condition:
+                  or:
+                    - equals:
+                        kubernetes.namespace: "cpaas-ui-gateway"
+                    - equals:
+                        kubernetes.namespace: "cpaas-ui-om-gateway"
+                config:
+                  - type: container
+                    paths:
+                      - /var/log/containers/*-${data.kubernetes.container.id}.log
+                    tags: ["ui-gateway"]
+              - condition:
+                  and:
+                    - or:
+                      - equals:
+                          kubernetes.namespace: "cpaas-sms-redis"
+                      - equals:
+                          kubernetes.namespace: "cpaas-voice-redis"
+                      - equals:
+                          kubernetes.namespace: "cpaas-chassis-redis"
+                    - contains:
+                        kubernetes.container.image: "redis"
+                config:
+                  - module: redis
+                    log:
+                      input:
+                        type: container
+                        paths:
+                          - /var/log/containers/*-${data.kubernetes.container.id}.log
+              - condition:
+                  contains:
+                    kubernetes.container.image: "nginx"
+                config:
+                  - module: nginx                  
+                    access:
+                      enabled: true
+                      input:
+                        type: container
+                        paths:
+                          - /var/log/containers/*-${data.kubernetes.container.id}.log
+                        stream: stdout
+                    error:
+                      enabled: true
+                      input:
+                        type: container
+                        paths:
+                          - /var/log/containers/*-${data.kubernetes.container.id}.log
+                        stream: stderr
+
+      processors:
+        - add_cloud_metadata:
+        - add_host_metadata:
+
+      cloud.id: ${ELASTIC_CLOUD_ID}
+      cloud.auth: ${ELASTIC_CLOUD_AUTH}
+
+      # -- Elasticsearch Output --
+      #output.elasticsearch:
+      #  hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
+      
+      # -- Logstash Output --
+      output.logstash:
+        hosts: ['logstash-logstash:5044']
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "100Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1000Mi"

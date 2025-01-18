@@ -1,0 +1,29 @@
+
+All Document 
+===============
+https://www.elastic.co/guide/index.html
+
+
+Video
+
+https://www.elastic.co/videos/
+
+
+Dockerhub (Image)
+
+https://hub.docker.com/_/elasticsearch
+
+
+https://logz.io/learn/complete-guide-elk-stack/#intro
+
+
+Getting Help for elasticsearch
+
+https://discuss.elastic.co
+
+
+Kubernetes Logging
+https://logz.io/blog/kubernetes-logging/
+https://www.digitalocean.com/community/tutorials/how-to-set-up-an-elasticsearch-fluentd-and-kibana-efk-logging-stack-on-kubernetes
+
+

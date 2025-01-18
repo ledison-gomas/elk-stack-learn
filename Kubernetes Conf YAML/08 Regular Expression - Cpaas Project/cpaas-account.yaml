@@ -1,0 +1,94 @@
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: cpaas-account-config
+data:
+  config.json: |
+    {
+        "consul_config": {
+            "Name": "accounts--v1",
+            "Tags": [
+                "v1",
+                "nginx-route"
+            ],
+            "Address": "127.0.0.1",
+            "Port": 8801,
+            "EnableTagOverride": false
+        },
+        "redis_conf" : {
+            "host": "redis-deploy-service",
+            "port" : 6379
+        },
+        "balmgt_conf" : {
+            "host": "cpaas-balmgt-service",
+            "port" : 8801
+        },
+        "prometheus_config": {
+            "port": 4001
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpaas-account
+  labels:
+    app: cpaas-account
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cpaas-account
+  template:
+    metadata:
+      labels:
+        app: cpaas-account
+      name: cpaas-account      
+    spec:
+      containers:
+      - name: cpaas-account
+        image: ledison/microservices:account1.0
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8801
+          containerPort: 4001
+        volumeMounts:
+        - readOnly: true
+          mountPath: config.json
+          subPath: config.json
+          name: cpaas-account-config
+      volumes:
+      - name: cpaas-account-config
+        configMap:
+          name: cpaas-account-config
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: cpaas-account-service
+  labels:
+    app: cpaas-account-service
+spec:
+  selector:
+    app: cpaas-account
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8801
+      targetPort: 8801
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: cpaas-account-prometheus-service
+  labels:
+    app: cpaas-account-prometheus-service
+spec:
+  selector:
+    app: cpaas-account
+  ports:
+    - name: http
+      protocol: TCP
+      port: 4001
+      targetPort: 4001

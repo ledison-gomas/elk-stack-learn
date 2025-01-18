@@ -1,0 +1,11 @@
+---
+antiAffinity: "soft"
+resources:
+  # requests:
+    # cpu: "1000m"
+    # memory: "2Gi"
+    # cpu: "100m"
+    # memory: "256mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"

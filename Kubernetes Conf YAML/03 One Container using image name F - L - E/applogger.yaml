@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: applogger
+  labels:
+    app: applogger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: applogger
+  template:
+    metadata:
+      labels:
+        app: applogger
+    spec:
+      containers:
+      - name: applogger
+        image: ledison/applogger:json1.0
+        imagePullPolicy: "Always"
+        env:
+        - name: ITER_COUNT
+          value: "3"

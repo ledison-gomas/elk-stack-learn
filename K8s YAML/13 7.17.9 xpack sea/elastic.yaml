@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elastic
+  labels:
+    app: elastic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elastic
+  template:
+    metadata:
+      labels:
+        app: elastic
+    spec:
+      containers:
+      - name: elastic
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 9200
+        - containerPort: 9300
+        env:
+        - name: discovery.type
+          value: "single-node"
+        - name: xpack.security.enabled
+          value: "true"
+        - name: xpack.security.authc.api_key.enabled
+          value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+spec:
+  selector:
+    app: elastic
+  ports:
+    - protocol: TCP
+      port: 9200
+      targetPort: 9200

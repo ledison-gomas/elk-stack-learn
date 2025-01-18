@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apploggerjson
+  labels:
+    app: apploggerjson
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apploggerjson
+  template:
+    metadata:
+      labels:
+        app: apploggerjson
+    spec:
+      containers:
+      - name: apploggerjson
+        image: ledison/applogger:json1.0
+        imagePullPolicy: "Always"
+        env:
+        - name: ITER_COUNT
+          value: "3"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apploggerkeyvalue
+  labels:
+    app: apploggerkeyvalue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apploggerkeyvalue
+  template:
+    metadata:
+      labels:
+        app: apploggerkeyvalue
+    spec:
+      containers:
+      - name: apploggerkeyvalue
+        image: ledison/applogger:keyvalue1.0
+        imagePullPolicy: "Always"
+        env:
+        - name: ITER_COUNT
+          value: "3"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apploggerappkeyvalue
+  labels:
+    app: apploggerappkeyvalue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apploggerappkeyvalue
+  template:
+    metadata:
+      labels:
+        app: apploggerappkeyvalue
+    spec:
+      containers:
+      - name: apploggerappkeyvalue
+        image: ledison/applogger:appkeyvalue1.0
+        imagePullPolicy: "Always"
+        env:
+        - name: ITER_COUNT
+          value: "3"
